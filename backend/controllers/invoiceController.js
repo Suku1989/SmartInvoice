@@ -94,7 +94,27 @@ async function uploadInvoice(req, res) {
     );
   } catch (error) {
     console.error('Upload error:', error);
-    res.status(500).json({ error: 'Failed to process invoice' });
+
+    const errorName = error?.name;
+    const message = error?.message || 'Failed to process invoice';
+    const isPdfParseError =
+      errorName === 'InvalidPDFException' ||
+      errorName === 'PasswordException' ||
+      errorName === 'FormatError';
+
+    const status = isPdfParseError ? 400 : 500;
+    const response = {
+      error: isPdfParseError
+        ? 'Unable to read the uploaded PDF. Try a different PDF or upload an image instead.'
+        : 'Failed to process invoice',
+    };
+
+    if (process.env.NODE_ENV !== 'production') {
+      response.details = message;
+      if (errorName) response.type = errorName;
+    }
+
+    res.status(status).json(response);
   }
 }
 

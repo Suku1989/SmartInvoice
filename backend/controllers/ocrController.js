@@ -1,5 +1,5 @@
 const { createWorker } = require('tesseract.js');
-const pdfParse = require('pdf-parse');
+const pdfParseModule = require('pdf-parse');
 const fs = require('fs').promises;
 
 async function extractTextFromImage(imagePath) {
@@ -14,8 +14,33 @@ async function extractTextFromImage(imagePath) {
 
 async function extractTextFromPDF(pdfPath) {
   const dataBuffer = await fs.readFile(pdfPath);
-  const data = await pdfParse(dataBuffer);
-  return data.text;
+
+  // pdf-parse has multiple module shapes across versions:
+  // - Older versions: require('pdf-parse') returns a function (dataBuffer) => { text }
+  // - Newer versions (like the one installed here): exports a PDFParse class with getText()
+  if (typeof pdfParseModule === 'function') {
+    const data = await pdfParseModule(dataBuffer);
+    return data.text;
+  }
+
+  if (typeof pdfParseModule?.default === 'function') {
+    const data = await pdfParseModule.default(dataBuffer);
+    return data.text;
+  }
+
+  if (typeof pdfParseModule?.PDFParse === 'function') {
+    const parser = new pdfParseModule.PDFParse({ data: dataBuffer });
+    try {
+      const result = await parser.getText();
+      return result?.text || '';
+    } finally {
+      if (typeof parser.destroy === 'function') {
+        await parser.destroy();
+      }
+    }
+  }
+
+  throw new Error('pdf-parse module API is not supported in this environment');
 }
 
 function parseInvoiceData(text) {

@@ -8,6 +8,9 @@ const db = require('./backend/models/database');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust proxy headers (required when running behind a dev proxy like CRA)
+app.set('trust proxy', 1);
+
 // Rate limiting configuration
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
