@@ -33,6 +33,14 @@ Automated invoice processing application for small or mid range organisations.
   - **Verified**: Invoices that have been reviewed and confirmed
   - **Exported**: Invoices that have been exported
 
+### Security Features
+- Rate limiting to prevent API abuse
+  - Upload endpoint: 10 requests per 15 minutes
+  - General API: 100 requests per 15 minutes
+- File type and size validation
+- Local data storage (no external API calls)
+- Input validation and error handling
+
 ## Technology Stack
 
 ### Backend
@@ -42,6 +50,7 @@ Automated invoice processing application for small or mid range organisations.
 - pdf-parse for PDF text extraction
 - Multer for file uploads
 - ExcelJS for Excel export
+- express-rate-limit for API protection
 
 ### Frontend
 - React.js
