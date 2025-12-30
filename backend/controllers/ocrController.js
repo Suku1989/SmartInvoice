@@ -119,6 +119,10 @@ function parseInvoiceData(text) {
     let match;
     while ((match = regex.exec(text)) !== null) {
       taxSum += parseFloat(match[1].replace(/,/g, ''));
+      // Prevent infinite loop on zero-length matches
+      if (match.index === regex.lastIndex) {
+        regex.lastIndex++;
+      }
     }
   }
   tax = taxSum;

@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { uploadInvoice } from '../services/api';
 
 function InvoiceUpload({ onUploadSuccess }) {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+  const fileInputRef = useRef(null);
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -32,8 +33,10 @@ function InvoiceUpload({ onUploadSuccess }) {
     try {
       const result = await uploadInvoice(file);
       setFile(null);
-      // Reset file input
-      document.getElementById('fileInput').value = '';
+      // Reset file input using ref
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       onUploadSuccess(result);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to upload invoice');
@@ -48,7 +51,7 @@ function InvoiceUpload({ onUploadSuccess }) {
       <div className="upload-form">
         <div className="file-input-group">
           <input
-            id="fileInput"
+            ref={fileInputRef}
             type="file"
             onChange={handleFileChange}
             accept=".pdf,.jpg,.jpeg,.png"
