@@ -54,22 +54,42 @@ async function uploadInvoice(req, res) {
             VALUES (?, ?, ?, ?, ?)
           `;
 
-          extractedData.line_items.forEach(item => {
+          let insertErrors = [];
+          let insertCount = 0;
+          const totalItems = extractedData.line_items.length;
+
+          extractedData.line_items.forEach((item, index) => {
             db.run(insertLineItem, [
               invoiceId,
               item.description,
               item.quantity,
               item.unit_price,
               item.amount
-            ]);
+            ], (insertErr) => {
+              insertCount++;
+              if (insertErr) {
+                console.error(`Failed to insert line item ${index}:`, insertErr);
+                insertErrors.push(insertErr.message);
+              }
+
+              // After all inserts attempted
+              if (insertCount === totalItems) {
+                res.json({
+                  success: true,
+                  invoice_id: invoiceId,
+                  extracted_data: extractedData,
+                  line_items_errors: insertErrors.length > 0 ? insertErrors : undefined
+                });
+              }
+            });
+          });
+        } else {
+          res.json({
+            success: true,
+            invoice_id: invoiceId,
+            extracted_data: extractedData
           });
         }
-
-        res.json({
-          success: true,
-          invoice_id: invoiceId,
-          extracted_data: extractedData
-        });
       }
     );
   } catch (error) {
@@ -168,9 +188,10 @@ function updateInvoice(req, res) {
       // Update line items if provided
       if (line_items && Array.isArray(line_items)) {
         // Delete existing line items
-        db.run('DELETE FROM line_items WHERE invoice_id = ?', [id], (err) => {
-          if (err) {
-            console.error('Failed to delete line items:', err);
+        db.run('DELETE FROM line_items WHERE invoice_id = ?', [id], (deleteErr) => {
+          if (deleteErr) {
+            console.error('Failed to delete line items:', deleteErr);
+            return res.status(500).json({ error: 'Failed to update line items' });
           }
 
           // Insert new line items
@@ -179,19 +200,44 @@ function updateInvoice(req, res) {
             VALUES (?, ?, ?, ?, ?)
           `;
 
-          line_items.forEach(item => {
+          let insertErrors = [];
+          let insertCount = 0;
+          const totalItems = line_items.length;
+
+          if (totalItems === 0) {
+            return res.json({ success: true, message: 'Invoice updated successfully' });
+          }
+
+          line_items.forEach((item, index) => {
             db.run(insertLineItem, [
               id,
               item.description,
               item.quantity,
               item.unit_price,
               item.amount
-            ]);
+            ], (insertErr) => {
+              insertCount++;
+              if (insertErr) {
+                insertErrors.push(`Item ${index}: ${insertErr.message}`);
+              }
+              
+              // Check if all inserts completed
+              if (insertCount === totalItems) {
+                if (insertErrors.length > 0) {
+                  console.error('Line item insertion errors:', insertErrors);
+                  return res.status(500).json({ 
+                    error: 'Some line items failed to update',
+                    details: insertErrors
+                  });
+                }
+                res.json({ success: true, message: 'Invoice updated successfully' });
+              }
+            });
           });
         });
+      } else {
+        res.json({ success: true, message: 'Invoice updated successfully' });
       }
-
-      res.json({ success: true, message: 'Invoice updated successfully' });
     }
   );
 }

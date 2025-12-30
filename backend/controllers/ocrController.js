@@ -115,8 +115,9 @@ function parseInvoiceData(text) {
 
   let taxSum = 0;
   for (const pattern of taxPatterns) {
-    const matches = text.matchAll(new RegExp(pattern, 'gi'));
-    for (const match of matches) {
+    const regex = new RegExp(pattern, 'gi');
+    let match;
+    while ((match = regex.exec(text)) !== null) {
       taxSum += parseFloat(match[1].replace(/,/g, ''));
     }
   }

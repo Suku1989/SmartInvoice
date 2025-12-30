@@ -42,10 +42,20 @@ function ManualCorrectionForm({ invoice, onClose, onSave }) {
 
   const handleLineItemChange = (index, field, value) => {
     const updatedLineItems = [...formData.line_items];
-    updatedLineItems[index] = {
-      ...updatedLineItems[index],
-      [field]: field === 'description' ? value : parseFloat(value) || 0
-    };
+    
+    if (field === 'description') {
+      updatedLineItems[index] = {
+        ...updatedLineItems[index],
+        [field]: value
+      };
+    } else {
+      // For numeric fields, handle empty string and invalid values
+      const numValue = value === '' ? 0 : parseFloat(value);
+      updatedLineItems[index] = {
+        ...updatedLineItems[index],
+        [field]: isNaN(numValue) ? 0 : numValue
+      };
+    }
 
     // Recalculate amount if quantity or unit_price changes
     if (field === 'quantity' || field === 'unit_price') {
