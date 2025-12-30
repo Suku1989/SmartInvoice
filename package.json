@@ -1,0 +1,24 @@
+{
+  "name": "smartinvoice",
+  "version": "1.0.0",
+  "description": "Automated invoice processing application for small or mid range organisations.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "exceljs": "^4.4.0",
+    "express": "^5.2.1",
+    "multer": "^2.0.2",
+    "pdf-parse": "^2.4.5",
+    "sqlite3": "^5.1.7",
+    "tesseract.js": "^7.0.0",
+    "uuid": "^13.0.0"
+  }
+}
