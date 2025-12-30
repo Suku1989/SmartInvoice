@@ -15,6 +15,11 @@ app.use(express.urlencoded({ extended: true }));
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Health check endpoint (before other routes)
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK', message: 'SmartInvoice API is running' });
+});
+
 // API routes
 app.use('/api', invoiceRoutes);
 
@@ -22,15 +27,11 @@ app.use('/api', invoiceRoutes);
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, 'frontend/build')));
   
-  app.get('*', (req, res) => {
+  // Catch-all route for React Router (must be last)
+  app.use((req, res) => {
     res.sendFile(path.join(__dirname, 'frontend/build', 'index.html'));
   });
 }
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({ status: 'OK', message: 'SmartInvoice API is running' });
-});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
