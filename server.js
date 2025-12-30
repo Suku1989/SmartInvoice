@@ -1,11 +1,30 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const rateLimit = require('express-rate-limit');
 const invoiceRoutes = require('./backend/routes/invoiceRoutes');
 const db = require('./backend/models/database');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Rate limiting configuration
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Upload rate limiter (more restrictive)
+const uploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Limit each IP to 10 uploads per windowMs
+  message: 'Too many upload requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // Middleware
 app.use(cors());
@@ -20,8 +39,9 @@ app.get('/health', (req, res) => {
   res.json({ status: 'OK', message: 'SmartInvoice API is running' });
 });
 
-// API routes
-app.use('/api', invoiceRoutes);
+// API routes with rate limiting
+app.use('/api/upload', uploadLimiter);
+app.use('/api', apiLimiter, invoiceRoutes);
 
 // Serve React frontend in production
 if (process.env.NODE_ENV === 'production') {
